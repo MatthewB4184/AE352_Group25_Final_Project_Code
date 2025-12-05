@@ -1,0 +1,104 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# ---------------------------------------------------------
+# Problem 1: Hover at 1 m for 120 seconds
+# ---------------------------------------------------------
+t1 = np.linspace(0, 120, 400)
+x1 = np.zeros_like(t1)
+y1 = np.zeros_like(t1)
+z1 = np.ones_like(t1) * 1.0  # 1 m altitude
+
+# ---------------------------------------------------------
+# Problem 2: Circle 2 m radius, 1 m altitude, 0.5 m/s, 60 s
+# ---------------------------------------------------------
+r = 2.0
+v_circle = 0.5
+omega_circle = v_circle / r  # rad/s
+
+t2 = np.linspace(0, 60, 600)
+x2 = r * np.cos(omega_circle * t2)
+y2 = r * np.sin(omega_circle * t2)
+z2 = np.ones_like(t2) * 1.0
+
+# ---------------------------------------------------------
+# Problem 3: Multi-phase mission path
+# ---------------------------------------------------------
+# 1) Ascend 0 → 1 m over 2 seconds
+t_a = np.linspace(0, 2, 80)
+x_a = np.zeros_like(t_a)
+y_a = np.zeros_like(t_a)
+z_a = np.linspace(0, 1, t_a.size)
+
+# 2) Move +x for 5 m at 1 m/s (5 seconds)
+t_b = np.linspace(0, 5, 100)
+x_b = np.linspace(0, 5, t_b.size)
+y_b = np.zeros_like(t_b)
+z_b = np.ones_like(t_b)
+
+# 3) Hover for 2 seconds
+t_c = np.linspace(0, 2, 40)
+x_c = np.ones_like(t_c) * 5.0
+y_c = np.zeros_like(t_c)
+z_c = np.ones_like(t_c)
+
+# 4) Yaw left 90° instantly and move +y 5 m at 1 m/s
+t_d = np.linspace(0, 5, 100)
+x_d = np.ones_like(t_d) * 5.0
+y_d = np.linspace(0, 5, t_d.size)
+z_d = np.ones_like(t_d)
+
+# 5) Hover for 2 seconds
+t_e = np.linspace(0, 2, 40)
+x_e = np.ones_like(t_e) * 5.0
+y_e = np.ones_like(t_e) * 5.0
+z_e = np.ones_like(t_e)
+
+# 6) Descend from 1 → 0 m at 0.01 m/s (100 seconds)
+t_f = np.linspace(0, 100, 400)
+x_f = np.ones_like(t_f) * 5.0
+y_f = np.ones_like(t_f) * 5.0
+z_f = np.linspace(1, 0, t_f.size)
+
+# Combine mission pieces
+x3 = np.concatenate([x_a, x_b, x_c, x_d, x_e, x_f])
+y3 = np.concatenate([y_a, y_b, y_c, y_d, y_e, y_f])
+z3 = np.concatenate([z_a, z_b, z_c, z_d, z_e, z_f])
+
+# ---------------------------------------------------------
+# Plotting
+# ---------------------------------------------------------
+
+# Problem 1 Plot
+fig1 = plt.figure(figsize=(7,7))
+ax1 = fig1.add_subplot(111, projection='3d')
+ax1.plot(x1, y1, z1)
+ax1.scatter([x1[0]], [y1[0]], [z1[0]], color='red', label="Start")
+ax1.set_xlabel("X (m)")
+ax1.set_ylabel("Y (m)")
+ax1.set_zlabel("Z (m)",labelpad=1)
+ax1.view_init(elev=30, azim=-60)
+
+# Problem 2 Plot
+fig2 = plt.figure(figsize=(7,7))
+ax2 = fig2.add_subplot(111, projection='3d')
+ax2.plot(x2, y2, z2)
+ax2.scatter([x2[0]], [y2[0]], [z2[0]], color='red', label="Start")
+ax2.set_xlabel("X (m)")
+ax2.set_ylabel("Y (m)")
+ax2.set_zlabel("Z (m)",labelpad=0)
+ax2.view_init(elev=30, azim=-60)
+
+# Problem 3 Plot
+fig3 = plt.figure(figsize=(7,7))
+ax3 = fig3.add_subplot(111, projection='3d')
+ax3.plot(x3, y3, z3, linewidth=2)
+ax3.scatter([x3[0]], [y3[0]], [z3[0]], color='red', label="Start")
+ax3.scatter([x3[-1]], [y3[-1]], [z3[-1]], color='green', label="End")
+ax3.set_xlabel("X (m)")
+ax3.set_ylabel("Y (m)")
+ax3.set_zlabel("Z (m)",labelpad=-1)
+ax3.view_init(elev=25, azim=-45)
+
+plt.show()
