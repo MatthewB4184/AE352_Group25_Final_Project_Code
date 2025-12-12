@@ -267,7 +267,6 @@ def run_maneuver(name):
     return {'t': t_hist, 'state': history, 'omegas': omegas_hist, 'power': power_hist, 'dt': dt}
 
 def moving_average(arr, window=5):
-    """Simple centered moving average using pandas (handles small arrays)."""
     if window <= 1:
         return arr
     s = pd.Series(arr)
