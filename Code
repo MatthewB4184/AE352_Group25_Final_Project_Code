@@ -20,6 +20,7 @@ I_y = 1/12 * m_c * (h**2 + l_b**2) + 2 * m_r * l**2
 I_z = 1/12 * m_c * (l_b**2 + w**2) + 4 * m_r * l**2
 I = np.diag([I_x, I_y, I_z])
 
+# maps the four rotor speeds to total thrust and body moments
 M = np.array([
     [kT,    kT,    kT,    kT],
     [0.0,  l*kT,  0.0, -l*kT],
@@ -27,6 +28,8 @@ M = np.array([
     [kQ,   -kQ,   kQ,   -kQ]
 ])
 Minv = np.linalg.inv(M)
+
+#Invert the mixer...thrust -> rotor speed
 
 omega_h = 296.0  
 
@@ -39,7 +42,7 @@ Kd_att = np.array([2.5, 2.5, 1.2])
 omega_max = 4000.0 
 T_max = kT * 4 * omega_max**2
 tau_max = np.array([0.8, 0.8, 0.5])
-
+#convert euler angles to translation/rotation matrix..usefor ref and transformations
 def euler_to_R(phi, theta, psi):
     sp = np.sin(phi); cp = np.cos(phi)
     st = np.sin(theta); ct = np.cos(theta)
@@ -51,12 +54,12 @@ def euler_to_R(phi, theta, psi):
     ])
     return R
 
-
+#convert body rates to euler angle rates
 def body_rates_to_euler_dot(phi, theta, p, q, r):
     s_phi = np.sin(phi); c_phi = np.cos(phi)
     c_theta = np.cos(theta)
     # protect cos(theta) near zero
-    if abs(c_theta) < 1e-6:
+    if abs(c_theta) < 1e-6:#spike/weird behavior near 90 deg need to avoid
         c_theta = 1e-6 * np.sign(c_theta) if c_theta != 0 else 1e-6
     W = np.array([
         [1, s_phi*np.tan(theta), c_phi*np.tan(theta)],
@@ -82,6 +85,8 @@ def solve_omegas_from_forces(desired_vec):
 def motor_power_from_omegas(omegas):
     return kQ * omegas**3
 
+#enforce zero v at start/end...avoid spikes 
+#normalize time so 0s to 1s
 def cubic_trajectory(p0, p1, T, tau):
     if T <= 0:
         return np.array(p1), np.zeros_like(p1), np.zeros_like(p1)
@@ -110,7 +115,7 @@ def make_maneuver_controller(maneuver):
             psi_des = theta + np.pi/2
             return {'pos_des': pos_des, 'vel_des': vel_des, 'acc_des': acc_des, 'psi_des': psi_des, 'yaw_rate_des': omega_ang}
         return ctrl, duration, 0.02
-
+#break up maneuver into mult steps...easier to debug and address issues
     if maneuver == 'complex':
         t_takeoff = 2.0       
         t_trans1 = 5.0        
@@ -120,7 +125,7 @@ def make_maneuver_controller(maneuver):
         t_hover2 = 2.0
         t_land = 4.0          
         total = t_takeoff + t_trans1 + t_hover1 + t_yaw + t_trans2 + t_hover2 + t_land
-
+#set beginning/end position for each part of maneuver
         p_takeoff_start = np.array([0.0, 0.0, 0.0])
         p_takeoff_end = np.array([0.0, 0.0, 1.0])
         p_trans1_start = p_takeoff_end
@@ -128,7 +133,7 @@ def make_maneuver_controller(maneuver):
         p_trans2_start = p_trans1_end
         p_trans2_end = np.array([5.0, 5.0, 1.0])
         p_land_end = np.array([5.0, 5.0, 0.0])
-
+#yaw rotation while keeping pos fixed for simplicity/stability
         yaw_start = 0.0
         yaw_final = np.deg2rad(90.0)  
 
@@ -210,7 +215,7 @@ def run_maneuver(name):
     omegas_hist = np.zeros((steps, 4))
     power_hist = np.zeros(steps)
     t_hist = np.zeros(steps)
-
+#get desired position, rates, power, and euler angles
     for i in range(steps):
         t = i * dt
         history[i, :] = s
